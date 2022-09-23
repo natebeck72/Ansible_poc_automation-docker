@@ -230,6 +230,10 @@
         destination_addresses: [ '100.64.1.4' ]
         service: 'panorama-access'
         destination_translated_address: '100.64.2.5'
+        source_translation_type: 'dynamic-ip-and-port'
+        source_translation_address_type: 'interface-address'
+        source_translation_interface: 'ethernet1/2'
+        source_translation_ip_address: '100.64.2.4/24'
 
     # Create the outbound NAT rule for traffic
 
