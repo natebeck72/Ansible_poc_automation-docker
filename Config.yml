@@ -61,11 +61,11 @@
     # Create zones on the firewall and assign interfaces
 
     - name: Create untrust zone
-        panos_zone:
-          provider: '{{ firewall }}'
-          zone: 'untrust'
-          mode: 'layer3'
-          interface: 'ethernet1/1'
+      panos_zone:
+        provider: '{{ firewall }}'
+        zone: 'untrust'
+        mode: 'layer3'
+        interface: 'ethernet1/1'
 
     - name: Create trust zone
       panos_zone:
