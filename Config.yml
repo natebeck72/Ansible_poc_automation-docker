@@ -1,0 +1,365 @@
+---
+- hosts: localhost
+  connection: local
+
+vars:
+    firewall:
+        ip_address:
+        username:
+        password:
+    panorama:
+        ip_address:
+        username:
+        password:
+
+collections:
+    - paloaltonetworks.panos
+
+tasks:
+
+    #Leverage the panos_check command to see when the FW is ready for configuration.  This is a 4 minute delay, and then a check every 5 seconds for 6 minutes
+    - name: Check to see if the FW is ready
+      panos_check:
+        provider: '{{ firewall }}'
+        initial_delay: 240
+        interval: 5
+        timeout: 1800
+
+
+    - name: configure eth1 firewall
+      panos_config_element:
+        provider: '{{ firewall }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/network"
+        element:  "<interface>
+                      <ethernet>
+                        <entry name='ethernet1/1'>
+                          <layer3>
+                            <ip>
+                              <entry name='100.64.1.4/24'/>
+                            </ip>
+                          </layer3>
+                        </entry>
+                      <ethernet>
+                    </inteface>"
+
+    - name: configure eth2 firewall
+      panos_config_element:
+        provider: '{{ firewall }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/network"
+        element:  "<interface>
+                      <ethernet>
+                        <entry name='ethernet1/2'>
+                          <layer3>
+                            <ip>
+                              <entry name='100.64.2.4/24'/>
+                            </ip>
+                          </layer3>
+                        </entry>
+                      <ethernet>
+                    </interface>"
+
+    # Create zones on the firewall and assign interfaces
+
+    - name: Create untrust zone
+        panos_zone:
+          provider: '{{ firewall }}'
+          zone: 'untrust'
+          mode: 'layer3'
+          interface: 'ethernet1/1'
+
+    - name: Create trust zone
+      panos_zone:
+        provider: '{{ firewall }}'
+        zone: 'trust'
+        mode: 'layer3'
+        interface: 'ethernet1/2'
+
+    # Configure Virtual Router
+
+    - name: Configure Virtual Router
+      panos_virtual_router:
+        provider: '{{ firewall }}'
+        name: 'default'
+        interface: ['ethernet1/1', 'ethernet1/2']
+
+    - name: Set default route firewall
+      panos_static_route:
+        provider: '{{ firewall }}'
+        name: 'default'
+        destination: '0.0.0.0/0'
+        nexthop: '100.64.1.1'
+        interface: 'ethernet1/1'
+
+    - name: Create ssh service object
+      panos_service_object:
+        provider: '{{ fireawll }}'
+        name: service-ssh
+        protocol: tcp
+        destination_port: 22
+
+    - name: Create Service Group
+        panos_service_group:
+        provider: '{{ firewall }}'
+        name: panorama-access
+        value: ['service-https', 'service-ssh']
+
+    - name: Create inbound panorama security rule
+      panos_config_element:
+        provider: '{{ firewall }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain'/vsys/entry[@name='vsys1']/rulebase/security/rules"
+        element: "<entry name='Inbound_Panorama_NAT'>
+                    <to>
+                      <member>trust</member>
+                    </to>
+                    <from>
+                      <member>untrust</member>
+                    </from>
+                    <source>
+                      <member>any</member>
+                    </source>
+                    <destination>
+                      <member>100.64.1.1</member>
+                    </destination>
+                    <source-user>
+                      <member>any</member>
+                    </source-user>
+                    <category>
+                      <member>any</member>
+                    </category>
+                    <application>
+                      <member>any</member>
+                    </application>
+                    <service>
+                      <member>panorama-access</member>
+                    </service>
+                    <source-hip>
+                      <member>any</member>
+                    </source-hip>
+                    <destination-hip>
+                      <member>any</member>
+                    </destination-hip>
+                    <action>allow</action>
+                  </entry>"
+
+    - name: create outbound NAT security rule
+      panos_config_element:
+        provider: '{{ firewall }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules"
+        element: "<entry name='Outbound_NAT'>
+                    <to>
+                      <member>PA_Untrust</member>
+                    </to>
+                    <from>
+                      <member>PA_Trust</member>
+                    </from>
+                    <source>
+                      <member>any</member>
+                    </source>
+                    <destination>
+                      <member>any</member>
+                    </destination>
+                    <source-user>
+                      <member>any</member>
+                    </source-user>
+                    <category>
+                      <member>any</member>
+                    </category>
+                    <application>
+                      <member>any</member>
+                    </application>
+                    <service>
+                      <member>application-default</member>
+                    </service>
+                    <source-hip>
+                      <member>any</member>
+                    </source-hip>
+                    <destination-hip>
+                      <member>any</member>
+                    </destination-hip>
+                    <action>allow</action>
+                  </entry>"
+
+    - name: create Cortex Datalake Securiy Rule
+      panos_config_element:
+        provider: '{{ firewall }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules"
+        element: "<entry name='Cortex_Datalake'>
+                    <to>
+                      <member>PA_Untrust</member>
+                    </to>
+                    <from>
+                      <member>PA_Trust</member>
+                    </from>
+                    <source>
+                      <member>any</member>
+                    </source>
+                    <destination>
+                      <member>any</member>
+                    </destination>
+                    <source-user>
+                      <member>any</member>
+                    </source-user>
+                    <category>
+                      <member>any</member>
+                    </category>
+                    <application>
+                      <member>paloalto-logging-service</member>
+                      <member>paloalto-shared-services</member>
+                    </application>
+                    <service>
+                      <member>any</member>
+                    </service>
+                    <source-hip>
+                      <member>any</member>
+                    </source-hip>
+                    <destination-hip>
+                      <member>any</member>
+                    </destination-hip>
+                    <action>allow</action>
+                  </entry>"
+
+    # Create the inbound NAT rule for panorama
+
+    - name: create Inbound NAT Rule
+      panos_nat_rule:
+        provider: '{{ firewall }}'
+        rule_name: 'Panorama_NAT'
+        source_zone: [ 'PA_Untrust' ]
+        destination_zone: 'PA_Untrust'
+        source_ip: [ 'any' ]
+        destination_ip: [ '100.64.1.4' ]
+        service: 'panorama-access'
+        dnat_address: '100.64.2.5'
+
+    # Create the outbound NAT rule for traffic
+
+    - name: create Outbound NAT Rule
+      panos_nat_rule:
+        provider: '{{ firewall }}'
+        rule_name: 'Outbound_NAT'
+        source_zone: [ 'PA_Trust' ]
+        source_ip: [ 'any' ]
+        destination_zone: 'PA_Untrust'
+        snat_type: 'dynamic-ip-and-port'
+        snat_interface: 'ethernet1/1'
+
+    # push in MGMT config DNS and NTP to the FW, we don't do timezone (usually not needed) and we don't do updates
+
+    - name: Create Mgmt Config
+      panos_mgtconfig:
+        provider: '{{ firewall }}'
+        dns_server_primary: '8.8.8.8'
+        dns_server_secondary: '8.8.4.4'
+        ntp_server_primary: 'pool.ntp.org'
+        ntp_server_secondary: 'time.nist.gov'
+
+    # Change the FW admin password to a random value
+    - name: Change admin password on ngfw
+      panos_administrator:
+        provider: '{{ firewall }}'
+        admin_username: 'admin'
+        admin_password: "{{ lookup('community.general.random_string', length=15) }}"
+
+    # Commit the FW configuration
+
+    - name: Commit FW Config
+      panos_commit_firewall:
+        provider: '{{ firewall }}'
+
+    # NOW WE ARE MOVING TO THE PANORAMA CONFIGURATION
+
+    - name: Check for panorama ready
+      panos_check:
+        provider: '{{ panorama }}'
+        initial_delay: 240
+        interval: 5
+        timeout: 1800
+
+    - name: Create mgmt config on panorama
+      panos_mgmtconfig:
+        provider: '{{ panorama }}'
+        dns_server_primary: '8.8.8.8'
+        dns_server_secondary: '9.9.9.9'
+        ntp_server_primary: 'pool.ntp.org'
+        ntp_server_secondary: 'time.nist.gov'
+        timezone: '{{ timezone }}'
+
+    - name: check for panorama ready
+      panos_check:
+        provider: '{{ panorama }}'
+        initial_delay: 240
+        interval: 5
+        timeout: 1800
+
+    - name: Change panorama admin password to random string
+      panos_administrator:
+        provider: '{{ panorama }}'
+        admin_username: 'admin'
+        admin_password: "{{ lookup('community.general.random_string', length=15) }}"
+
+    # Kicking off commit so nothing is lost
+
+    - name: Commit Panorama Config
+      panos_commit_panorama:
+        provider: '{{ panorama }}'
+
+    - name: check for panorama ready
+      panos_check:
+        provider: '{{ panorama }}'
+        initial_delay: 240
+        interval: 5
+        timeout: 1800
+
+    # Import the SSL Cert for the POC Domain
+    - name: Import SSL Cert for Panorama
+      panos_import:
+        provider: '{{ panorama }}'
+        category: 'keypair'
+        certificate_name: 'Wildcard'
+        format: 'pkcs12'
+        passphrase: '{{ certpassphrase }}'
+        url: '{{ certurl }}'
+
+    - name: Pause for 30 seconds
+      pause:
+        seconds: 30
+
+    - name: Create TLS Profile
+      panos_config_element:
+        provider: '{{ panorama }}'
+        xpath: "/config/panorama/ssl-tls-service-profile"
+        element:  '<entry name="POC_CERT">
+                    <protocol-settings>
+                      <min-version>tls1-1</min-version>
+                      <max-version>max</max-version>
+                    </protocol-settings>
+                    <certificate>Wildcard</certificate>
+                  </entry>'
+    
+    - name: Set TLS Profile
+      panos_config_element:
+        provider: '{{ panorama }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfing/system"
+        element:  '<ssl-tls-service-profile>POC_CERT</ssl-tls-service-profile>'
+
+    - name: Create Customer Banner
+      panos_config_element:
+        provider: '{{ panroama }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+        element:  "<motd-and-banner>
+                    <banner-header>{{ customername }}</banner-header>
+                    <banner-header-color>color6</banner-header-color>
+                    <banner-header-text-color>color4</banner-header-text-color>
+                  </motd-and-banner>"
+
+    - name: Create Device Group for POC
+      panos_config_element:
+        provider: '{{ panorama }}'
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group"
+        element: "<entry name='PrismaAccess'><devices/></entry>"
+
+    - name: Commit Panorama Config
+        panos_commit_panorama:
+          provider: '{{ panorama }}'
+
+    
