@@ -276,7 +276,7 @@
         timeout: 1800
 
     - name: Create mgmt config on panorama
-      panos_mgmtconfig:
+      panos_mgtconfig:
         provider: '{{ panorama }}'
         dns_server_primary: '8.8.8.8'
         dns_server_secondary: '9.9.9.9'
