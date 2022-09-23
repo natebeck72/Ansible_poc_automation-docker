@@ -2,7 +2,7 @@
 - hosts: localhost
   connection: local
 
-vars:
+  vars:
     firewall:
         ip_address:
         username:
@@ -12,10 +12,10 @@ vars:
         username:
         password:
 
-collections:
+  collections:
     - paloaltonetworks.panos
 
-tasks:
+  tasks:
 
     #Leverage the panos_check command to see when the FW is ready for configuration.  This is a 4 minute delay, and then a check every 5 seconds for 6 minutes
     - name: Check to see if the FW is ready
