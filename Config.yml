@@ -39,7 +39,7 @@
                             </ip>
                           </layer3>
                         </entry>
-                      <ethernet>
+                      </ethernet>
                     </interface>"
 
     - name: configure eth2 firewall
@@ -55,7 +55,7 @@
                             </ip>
                           </layer3>
                         </entry>
-                      <ethernet>
+                      </ethernet>
                     </interface>"
 
     # Create zones on the firewall and assign interfaces
