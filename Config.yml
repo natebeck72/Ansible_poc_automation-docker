@@ -92,7 +92,7 @@
 
     - name: Create ssh service object
       panos_service_object:
-        provider: '{{ fireawll }}'
+        provider: '{{ firewall }}'
         name: service-ssh
         protocol: tcp
         destination_port: 22
