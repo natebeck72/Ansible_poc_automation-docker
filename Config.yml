@@ -359,7 +359,7 @@
         element: "<entry name='PrismaAccess'><devices/></entry>"
 
     - name: Commit Panorama Config
-        panos_commit_panorama:
-          provider: '{{ panorama }}'
+      panos_commit_panorama:
+        provider: '{{ panorama }}'
 
     
