@@ -40,7 +40,7 @@
                           </layer3>
                         </entry>
                       <ethernet>
-                    </inteface>"
+                    </interface>"
 
     - name: configure eth2 firewall
       panos_config_element:
