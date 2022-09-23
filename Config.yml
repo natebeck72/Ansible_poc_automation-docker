@@ -241,6 +241,7 @@
         source_addresses: [ 'any' ]
         to_zones: ['untrust']
         source_translation_type: 'dynamic-ip-and-port'
+        source_translation_address_type: 'inteface-address'
         source_translation_interface: 'ethernet1/1'
 
     # push in MGMT config DNS and NTP to the FW, we don't do timezone (usually not needed) and we don't do updates
