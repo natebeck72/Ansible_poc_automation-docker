@@ -98,7 +98,7 @@
         destination_port: 22
 
     - name: Create Service Group
-        panos_service_group:
+      panos_service_group:
         provider: '{{ firewall }}'
         name: panorama-access
         value: ['service-https', 'service-ssh']
