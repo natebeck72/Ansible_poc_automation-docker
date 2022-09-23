@@ -21,7 +21,7 @@
     - name: Check to see if the FW is ready
       panos_check:
         provider: '{{ firewall }}'
-        initial_delay: 240
+        initial_delay: 30
         interval: 5
         timeout: 1800
 
@@ -30,7 +30,7 @@
       panos_config_element:
         provider: '{{ firewall }}'
         xpath: "/config/devices/entry[@name='localhost.localdomain']/network"
-        element:  "<interface>
+        element:   "<interface>
                       <ethernet>
                         <entry name='ethernet1/1'>
                           <layer3>
