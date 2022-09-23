@@ -245,6 +245,7 @@
         source_translation_type: 'dynamic-ip-and-port'
         source_translation_address_type: 'interface-address'
         source_translation_interface: 'ethernet1/1'
+        source_translation_ip_address: '100.64.1.4/24'
 
     # push in MGMT config DNS and NTP to the FW, we don't do timezone (usually not needed) and we don't do updates
 
