@@ -4,13 +4,13 @@
 
   vars:
     firewall:
-        ip_address:
-        username:
-        password:
+        ip_address: '{{ ngfwip }}'
+        username: '{{ admin_username }}'
+        password: '{{ admin_password }}'
     panorama:
-        ip_address:
-        username:
-        password:
+        ip_address: '{{ panoramaip }}'
+        username: '{{ admin_username }}'
+        password: '{{ admin_password }}'
 
   collections:
     - paloaltonetworks.panos
