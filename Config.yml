@@ -352,7 +352,7 @@
 
     - name: Create Customer Banner
       panos_config_element:
-        provider: '{{ panroama }}'
+        provider: '{{ panorama }}'
         xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
         element:  "<motd-and-banner>
                     <banner-header>{{ customername }}</banner-header>
