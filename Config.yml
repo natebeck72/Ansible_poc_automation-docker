@@ -106,7 +106,7 @@
     - name: Create inbound panorama security rule
       panos_config_element:
         provider: '{{ firewall }}'
-        xpath: "/config/devices/entry[@name='localhost.localdomain'/vsys/entry[@name='vsys1']/rulebase/security/rules"
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules"
         element: "<entry name='Inbound_Panorama_NAT'>
                     <to>
                       <member>trust</member>
