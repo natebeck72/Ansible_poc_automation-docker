@@ -147,10 +147,10 @@
         xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules"
         element: "<entry name='Outbound_NAT'>
                     <to>
-                      <member>PA_Untrust</member>
+                      <member>untrust</member>
                     </to>
                     <from>
-                      <member>PA_Trust</member>
+                      <member>trust</member>
                     </from>
                     <source>
                       <member>any</member>
@@ -185,10 +185,10 @@
         xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules"
         element: "<entry name='Cortex_Datalake'>
                     <to>
-                      <member>PA_Untrust</member>
+                      <member>untrust</member>
                     </to>
                     <from>
-                      <member>PA_Trust</member>
+                      <member>trust</member>
                     </from>
                     <source>
                       <member>any</member>
@@ -224,8 +224,8 @@
       panos_nat_rule:
         provider: '{{ firewall }}'
         rule_name: 'Panorama_NAT'
-        source_zone: [ 'PA_Untrust' ]
-        destination_zone: 'PA_Untrust'
+        source_zone: [ 'untrust' ]
+        destination_zone: 'untrust'
         source_ip: [ 'any' ]
         destination_ip: [ '100.64.1.4' ]
         service: 'panorama-access'
@@ -237,9 +237,9 @@
       panos_nat_rule:
         provider: '{{ firewall }}'
         rule_name: 'Outbound_NAT'
-        source_zone: [ 'PA_Trust' ]
+        source_zone: [ 'trust' ]
         source_ip: [ 'any' ]
-        destination_zone: 'PA_Untrust'
+        destination_zone: 'untrust'
         snat_type: 'dynamic-ip-and-port'
         snat_interface: 'ethernet1/1'
 
