@@ -347,7 +347,7 @@
     - name: Set TLS Profile
       panos_config_element:
         provider: '{{ panorama }}'
-        xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfing/system"
+        xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
         element:  '<ssl-tls-service-profile>POC_CERT</ssl-tls-service-profile>'
 
     - name: Create Customer Banner
