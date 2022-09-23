@@ -223,7 +223,7 @@
     - name: create Inbound NAT Rule
       panos_nat_rule2:
         provider: '{{ firewall }}'
-        rule_name: 'Panorama_NAT'
+        name: 'Panorama_NAT'
         from_zones: [ 'untrust' ]
         to_zones: [ 'untrust' ]
         source_addresses: [ 'any' ]
@@ -236,7 +236,7 @@
     - name: create Outbound NAT Rule
       panos_nat_rule2:
         provider: '{{ firewall }}'
-        rule_name: 'Outbound_NAT'
+        name: 'Outbound_NAT'
         from_zones: [ 'trust' ]
         source_addresses: [ 'any' ]
         to_zones: ['untrust']
