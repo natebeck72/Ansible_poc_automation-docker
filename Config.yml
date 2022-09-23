@@ -279,7 +279,7 @@
     - name: Check for panorama ready
       panos_check:
         provider: '{{ panorama }}'
-        initial_delay: 240
+        initial_delay: 30
         interval: 5
         timeout: 1800
 
@@ -295,7 +295,7 @@
     - name: check for panorama ready
       panos_check:
         provider: '{{ panorama }}'
-        initial_delay: 240
+        initial_delay: 30
         interval: 5
         timeout: 1800
 
@@ -314,7 +314,7 @@
     - name: check for panorama ready
       panos_check:
         provider: '{{ panorama }}'
-        initial_delay: 240
+        initial_delay: 30
         interval: 5
         timeout: 1800
 
