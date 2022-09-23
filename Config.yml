@@ -221,27 +221,27 @@
     # Create the inbound NAT rule for panorama
 
     - name: create Inbound NAT Rule
-      panos_nat_rule:
+      panos_nat_rule2:
         provider: '{{ firewall }}'
         rule_name: 'Panorama_NAT'
-        source_zone: [ 'untrust' ]
-        destination_zone: 'untrust'
-        source_ip: [ 'any' ]
-        destination_ip: [ '100.64.1.4' ]
+        from_zones: [ 'untrust' ]
+        to_zones: [ 'untrust' ]
+        source_addresses: [ 'any' ]
+        destination_addresses: [ '100.64.1.4' ]
         service: 'panorama-access'
-        dnat_address: '100.64.2.5'
+        destination_translated_address: '100.64.2.5'
 
     # Create the outbound NAT rule for traffic
 
     - name: create Outbound NAT Rule
-      panos_nat_rule:
+      panos_nat_rule2:
         provider: '{{ firewall }}'
         rule_name: 'Outbound_NAT'
-        source_zone: [ 'trust' ]
-        source_ip: [ 'any' ]
-        destination_zone: 'untrust'
-        snat_type: 'dynamic-ip-and-port'
-        snat_interface: 'ethernet1/1'
+        from_zones: [ 'trust' ]
+        source_addresses: [ 'any' ]
+        to_zones: ['untrust']
+        source_translation_type: 'dynamic-ip-and-port'
+        source_translation_interface: 'ethernet1/1'
 
     # push in MGMT config DNS and NTP to the FW, we don't do timezone (usually not needed) and we don't do updates
 
