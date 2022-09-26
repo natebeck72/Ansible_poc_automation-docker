@@ -27,7 +27,7 @@
 
   - name: License Fetch
     panos_op:
-      provider: '{{ panorma }}'
+      provider: '{{ panorama }}'
       cmd: 'request license fetch'
 
   - name: Slight Pause
