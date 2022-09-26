@@ -1,0 +1,2833 @@
+---
+- hosts: localhost
+  connection: local
+
+  vars:
+    panorama:
+        ip_address: '{{ panoramaip }}'
+        username: '{{ admin_username }}'
+        password: '{{ admin_password }}'
+
+  collections:
+    - paloaltonetworks.panos
+
+  tasks:
+
+  - name: License Panorama
+    panos_op:
+      provider: '{{ panorama }}'
+      cmd: 'set serial-number {{ serial_number }}'
+
+  - name: check Panorma ready
+    panos_check:
+      provider: '{{ panorama }}'
+      initial_delay: 60
+      interval: 5
+      timeout: 1800
+
+  - name: License Fetch
+    panos_op:
+      provider: '{{ panorma }}'
+      cmd: 'request license fetch'
+
+  - name: Slight Pause
+    pause:
+      seconds: 30
+
+  - name: Install Apps/Threats
+    panos_dynamic_updates:
+      provider: '{{ panorama }}'
+
+  - name: AV content download
+    panos_op:
+      provider: '{{ panorama }}'
+      cmd: 'request anti-virus upgrade download latest'
+
+  - name: Slight pause for download
+    pause:
+      seconds: 30
+
+  - name: AV Content Install
+    panos_op:
+      provider: '{{ panorama }}'
+      cmd: 'request anti-virus upgrade install version latest'
+
+  - name: Slight pause for install to complete
+    pause: 
+      seconds: 30
+
+  - name: Disable telemetry
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+      element: "<device-telemetry
+                  <threat-prevention>no</threat-prevention>
+                  <device-health-performance>no</device-health-performance>
+                  <product-usage>no</product-usage>
+                </device-telemetry>"
+
+  - name: Create Outbound Tag
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='Outbound'>
+                  <comments>Outbound to the Internet</comments>
+                  <color>color1</color>
+                </entry>"
+                
+  - name: Create Inbound Tag
+    panos_config_element:
+      provider: '{{ panorama ]]'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='Inbound'>
+                  <comments>Inbound from the Internet</comments>
+                  <color>color3</color>
+                </entry>"
+
+  - name: Create Internal Tag
+    panos_config_element:
+      provider: '{{ panorama ]]'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='Internal'>
+                  <comments>Internal to Internal</comments>
+                  <color>color13</color>
+                </entry>"
+
+  - name: Create Best Practice Tag
+    panos_config_element:
+      provider: '{{ panorama ]]'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='Best Practice'>
+                  <comments>Best Practice Rule</comments>
+                  <color>color6</color>
+                </entry>"
+
+  - name: Create decrypt Tag
+    panos_config_element:
+      provider: '{{ panorama ]]'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='decrypt'>
+                  <color>color2</color>
+                </entry>"
+
+  - name: Create no-decrypt Tag
+    panos_config_element:
+      provider: '{{ panorama ]]'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='no-decrypt'>
+                  <color>color19</color>
+                </entry>"
+
+  - name: Create best-practice-no-decrypt Tag
+    panos_config_element:
+      provider: '{{ panorama ]]'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/tag"
+      element: "<entry name='no-decrypt-best-practice'>
+                  <color>color27</color>
+                </entry>"
+
+  - name: Create DEM Objects
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/address"
+      element: "<entry name='agents.dem.prismaaccess.com'>
+                  <fqdn>agents.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.jp1.ap-northeast-1.dem.prismaaccess.com'>
+                  <fqdn>agents.jp1.ap-northeast-1.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.sg1.ap-southeast-1.dem.prismaaccess.com'>
+                  <fqdn>agents.sg1.ap-southeast-1.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.au1.ap-southeast-2.dem.prismaaccess.com'>
+                  <fqdn>agents.au1.ap-southeast-2.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.ca1.ca-central-1.dem.prismaaccess.com'>
+                  <fqdn>agents.ca1.ca-central-1.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.eu1.eu-central-1.dem.prismaaccess.com'>
+                  <fqdn>agents.eu1.eu-central-1.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.uk1.eu-west-2.dem.prismaaccess.com'>
+                  <fqdn>agents.uk1.eu-west-2.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.us1.us-east-2.dem.prismaaccess.com'>
+                  <fqdn>agents.us1.us-east-2.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='updates.dem.prismaaccess.com'>
+                  <fqdn>updates.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>
+                <entry name='agents.in1.ap-south-1.dem.prismaaccess.com'>
+                  <fqdn>agents.in1.ap-south-1.dem.prismaaccess.com</fqdn>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>"
+
+  - name: Create Address Group
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/address-group"
+      element: "<entry name='dem_agents'>
+                  <static>
+                    <member>agents.au1.ap-southeast-2.dem.prismaaccess.com</member>
+                    <member>agents.ca1.ca-central-1.dem.prismaaccess.com</member>
+                    <member>agents.dem.prismaaccess.com</member>
+                    <member>agents.eu1.eu-central-1.dem.prismaaccess.com</member>
+                    <member>agents.in1.ap-south-1.dem.prismaaccess.com</member>
+                    <member>agents.jp1.ap-northeast-1.dem.prismaaccess.com</member>
+                    <member>agents.sg1.ap-southeast-1.dem.prismaaccess.com</member>
+                    <member>agents.uk1.eu-west-2.dem.prismaaccess.com</member>
+                    <member>agents.us1.us-east-2.dem.prismaaccess.com</member>
+                    <member>updates.dem.prismaaccess.com</member>
+                  </static>
+                  <tag>
+                    <member>Best Practice</member>
+                  </tag>
+                </entry>"
+
+  - name: Create Decrypt Profile
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/decryption"
+      element:  "<entry name='RecommendedDecryptionProfile'>
+                  <ssl-forward-proxy>
+                  <block-expired-certificate>yes</block-expired-certificate>
+                  <block-untrusted-issuer>yes</block-untrusted-issuer>
+                  <block-unknown-cert>yes</block-unknown-cert>
+                  <block-timeout-cert>no</block-timeout-cert>
+                  <block-unsupported-version>yes</block-unsupported-version>
+                  <block-unsupported-cipher>yes</block-unsupported-cipher>
+                  <restrict-cert-exts>yes</restrict-cert-exts>
+                  <auto-include-altname>yes</auto-include-altname>
+                </ssl-forward-proxy>
+                <ssl-no-proxy>
+                  <block-expired-certificate>yes</block-expired-certificate>
+                  <block-untrusted-issuer>yes</block-untrusted-issuer>
+                </ssl-no-proxy>
+                <ssl-inbound-proxy>
+                  <block-unsupported-version>no</block-unsupported-version>
+                  <block-unsupported-cipher>no</block-unsupported-cipher>
+                </ssl-inbound-proxy>
+                <ssh-proxy>
+                  <block-unsupported-version>yes</block-unsupported-version>
+                  <block-unsupported-alg>yes</block-unsupported-alg>
+                </ssh-proxy>
+                <ssl-protocol-settings>
+                  <min-version>tls1-2</min-version>
+                  <max-version>max</max-version>
+                  <keyxchg-algo-rsa>yes</keyxchg-algo-rsa>
+                  <enc-algo-3des>no</enc-algo-3des>
+                  <enc-algo-rc4>no</enc-algo-rc4>
+                  <auth-algo-sha1>no</auth-algo-sha1>
+                </ssl-protocol-settings>
+              </entry>"
+
+  - name: Create No Decrypt Profile
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/decryption"
+      element: "<entry name='RecommendedNoDecryptionProfile'>
+                  <ssl-forward-proxy>
+                  <block-expired-certificate>yes</block-expired-certificate>
+                  <block-unknown-cert>yes</block-unknown-cert>
+                  <block-timeout-cert>no</block-timeout-cert>
+                  <block-unsupported-version>yes</block-unsupported-version>
+                  <block-unsupported-cipher>yes</block-unsupported-cipher>
+                  <restrict-cert-exts>yes</restrict-cert-exts>
+                  <auto-include-altname>yes</auto-include-altname>
+                </ssl-forward-proxy>
+                <ssl-no-proxy>
+                  <block-expired-certificate>yes</block-expired-certificate>
+                  <block-untrusted-issuer>yes</block-untrusted-issuer>
+                </ssl-no-proxy>
+                <ssl-inbound-proxy>
+                  <block-unsupported-version>no</block-unsupported-version>
+                  <block-unsupported-cipher>no</block-unsupported-cipher>
+                </ssl-inbound-proxy>
+                <ssh-proxy>
+                  <block-unsupported-version>yes</block-unsupported-version>
+                  <block-unsupported-alg>yes</block-unsupported-alg>
+                </ssh-proxy>
+                <ssl-protocol-settings>
+                  <min-version>tls1-2</min-version>
+                  <max-version>max</max-version>
+                  <keyxchg-algo-rsa>yes</keyxchg-algo-rsa>
+                  <enc-algo-3des>no</enc-algo-3des>
+                  <enc-algo-rc4>no</enc-algo-rc4>
+                  <auth-algo-sha1>no</auth-algo-sha1>
+                </ssl-protocol-settings>
+              </entry>"
+
+  - name: Create URL category for Custom-No-Decrypt
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/custom-url-category"
+      element: "<entry name='Custom-No-Decrypt'>
+                  <type>URL List</type>
+                    <list>
+                      <member>*.dem.prismaaccess.com</member>
+                    </list>
+                </entry>"
+
+  - name: Create URL Category for MSStore-No-Decrypt
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/custom-url-category"
+      element: "<entry name='MSStore-No-Decrypt'>
+                  <type>URL List</type>
+                    <list>
+                      <member>*.do.dsp.mp.microsoft.com</member>
+                      <member>*.delivery.mp.microsoft.com</member>
+                      <member>fe3cr.delivery.mp.microsoft.com</member>
+                      <member>windowsupdate.microsoft.com</member>
+                      <member>download.windowsupdate.com</member>
+                      <member>redir.metaservices.microsoft.com</member>
+                      <member>images.metaservices.microsoft.com</member>
+                      <member>c.microsoft.com</member>
+                      <member>wustat.windows.com</member>
+                      <member>crl.microsoft.com</member>
+                      <member>sls.update.microsoft.com</member>
+                      <member>storeedgefd.dsx.mp.microsoft.com</member>
+                      <member>fe3.delivery.mp.microsoft.com</member>
+                      <member>displaycatalog.mp.microsoft.com</member>
+                      <member>livetileedge.dsx.mp.microsoft.com</member>
+                      <member>insiderservice.microsoft.com</member>
+                      <member>fe2.update.microsoft.com</member>
+                      <member>login.live.com</member>
+                      <member>account.live.com</member>
+                      <member>clientconfig.passport.net</member>
+                      <member>*.wns.windows.com</member>
+                      <member>*.s-microsoft.com</member>
+                      <member>*.microsoft.com</member>
+                      <member>msftconnecttest.com</member>
+                    </list>
+                  </entry>"
+
+  - name: Create URL category for Allow
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/custom-url-category"
+      element: "<entry name='Allow'>
+                  <type>URL List</type>
+                </entry>"
+
+  - name: Create URL category for Block
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/custom-url-category"
+      element: "<entry name='Block'>
+                  <type>URL List</type>
+                </entry>"
+
+  - name: Create No-Decrypt Rule
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/pre-rulebase/decryption"
+      element:  "<rules>
+                  <entry name='NO-Decrypt URL Categories'>
+                    <target>
+                      <negate>no</negate>
+                    </target>
+                    <category>
+                      <member>financial-services</member>
+                      <member>government</member>
+                      <member>health-and-medicine</member>
+                      <member>shopping</member>
+                      <member>Custom-No-Decrypt</member>
+                    </category>
+                    <service>
+                      <member>any</member>
+                    </service>
+                    <type>
+                      <ssl-forward-proxy/>
+                    </type>
+                    <from>
+                      <member>any</member>
+                    </from>
+                    <to>
+                      <member>any</member>
+                    </to>
+                    <source>
+                      <member>any</member>
+                    </source>
+                    <tag>
+                      <member>no-decrypt-best-practice</member>
+                    </tag>
+                    <destination>
+                      <member>any</member>
+                    </destination>
+                    <source-user>
+                      <member>any</member>
+                    </source-user>
+                    <profile>RecommendedNoDecryptionProfile</profile>
+                    <action>no-decrypt</action>
+                    <disabled>yes</disabled>
+                    <description>This rule does not do Decryption.  This rule is validating SSL Protocol Communications.</description>
+                  </entry>
+                </rules>"
+
+  - name: Create Decrypt Rule
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/pre-rulebase/decryption"
+      element: "<rules>
+                  <entry name='Decrypt URL Categories'>
+                    <target>
+                      <negate>no</negate>
+                    </target>
+                    <category>
+                      <member>any</member>
+                    </category>
+                    <service>
+                      <member>any</member>
+                    </service>
+                    <type>
+                      <ssl-forward-proxy/>
+                    </type>
+                    <from>
+                      <member>PA_Trust</member>
+                    </from>
+                    <to>
+                      <member>PA_Untrust</member>
+                    </to>
+                    <source>
+                      <member>any</member>
+                    </source>
+                    <tag>
+                      <member>decrypt</member>
+                    </tag>
+                    <destination>
+                      <member>any</member>
+                    </destination>
+                    <source-user>
+                      <member>any</member>
+                    </source-user>
+                    <profile>RecommendedDecryptionProfile</profile>
+                    <action>decrypt</action>
+                    <disabled>yes</disabled>
+                    <description>This rule does do Decryption.  This rule is validating SSL Protocol Communications.</description>
+                  </entry>
+                </rules>"
+
+  - name: Create default logging settings for CDL
+    panos_log_forwarding_profile:
+      provider: '{{ panorama }}'
+      name: 'default'
+      enhanced_logging: true
+
+  - name: Create EDL Ruleset
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/pre-rulebase/security"
+      element:   "<rules>
+                    <entry name='Outbound Block Rule'>
+                      <description>Block outbound sessions with destination address matching one of the Palo Alto Networks external dynamic lists for high risk and known malicious IP addresses.</description>
+                      <to>
+                        <member>any</member>
+                      </to>
+                      <from>
+                        <member>any</member>
+                      </from>
+                      <source>
+                        <member>any</member>
+                      </source>
+                      <destination>
+                        <member>panw-bulletproof-ip-list</member>
+                        <member>panw-highrisk-ip-list</member>
+                        <member>panw-known-ip-list</member>
+                      </destination>
+                      <source-user>
+                        <member>any</member>
+                      </source-user>
+                      <category>
+                        <member>any</member>
+                      </category>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <service>
+                        <member>any</member>
+                      </service>
+                      <action>deny</action>
+                      <log-setting>default</log-setting>
+                      <tag>
+                        <member>Outbound</member>
+                        <member>Best Practice</member>
+                      </tag>
+                      <target>
+                        <negate>no</negate>
+                      </target>
+                      <source-hip>
+                        <member>any</member>
+                      </source-hip>
+                      <destination-hip>
+                        <member>any</member>
+                      </destination-hip>
+                    </entry>
+                    <entry name='Inbound Block Rule'>
+                      <description>Block inbound sessions with source address matching one of the Palo Alto Networks external dynamic lists for high risk and known malicious IP addresses.</description>
+                      <to>
+                        <member>any</member>
+                      </to>
+                      <from>
+                        <member>any</member>
+                      </from>
+                      <source>
+                        <member>panw-bulletproof-ip-list</member>
+                        <member>panw-highrisk-ip-list</member>
+                        <member>panw-known-ip-list</member>
+                      </source>
+                      <destination>
+                        <member>any</member>
+                      </destination>
+                      <source-user>
+                        <member>any</member>
+                      </source-user>
+                      <category>
+                        <member>any</member>
+                      </category>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <service>
+                        <member>any</member>
+                      </service>
+                      <action>deny</action>
+                      <log-setting>default</log-setting>
+                      <tag>
+                        <member>Inbound</member>
+                        <member>Best Practice</member>
+                      </tag>
+                      <target>
+                        <negate>no</negate>
+                      </target>
+                      <source-hip>
+                        <member>any</member>
+                      </source-hip>
+                      <destination-hip>
+                        <member>any</member>
+                      </destination-hip>
+                    </entry>
+                    <entry name='ADEM-Traffic'>
+                      <description>This is the traffic rule to allow adem traffic</description>
+                      <target>
+                        <negate>no</negate>
+                      </target>
+                      <to>
+                        <member>any</member>
+                      </to>
+                      <from>
+                        <member>any</member>
+                      </from>
+                      <source>
+                        <member>any</member>
+                      </source>
+                      <destination>
+                        <member>dem_agents</member>
+                      </destination>
+                      <source-user>
+                        <member>any</member>
+                      </source-user>
+                      <category>
+                        <member>any</member>
+                      </category>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <service>
+                        <member>any</member>
+                      </service>
+                      <source-hip>
+                        <member>any</member>
+                      </source-hip>
+                      <destination-hip>
+                        <member>any</member>
+                      </destination-hip>
+                      <action>allow</action>
+                      <log-setting>default</log-setting>
+                      <tag>
+                        <member>Best Practice</member>
+                        <member>Outbound</member>
+                      </tag>
+                    </entry>
+                    <entry name='Deny QUIC'>
+                      <to>
+                        <member>any</member>
+                      </to>
+                      <from>
+                        <member>any</member>
+                      </from>
+                      <source>
+                        <member>any</member>
+                      </source>
+                      <destination>
+                        <member>any</member>
+                      </destination>
+                      <source-user>
+                        <member>any</member>
+                      </source-user>
+                      <category>
+                        <member>any</member>
+                      </category>
+                      <application>
+                        <member>quic</member>
+                      </application>
+                      <service>
+                        <member>application-default</member>
+                      </service>
+                      <source-hip>
+                        <member>any</member>
+                      </source-hip>
+                      <destination-hip>
+                        <member>any</member>
+                      </destination-hip>
+                      <action>deny</action>
+                      <log-setting>default</log-setting>
+                      <tag>
+                        <member>Best Practice</member>
+                      </tag>
+                    </entry>
+                  </rules>"
+
+  - name: Create Outbound File Blocking Profile
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/file-blocking"
+      element: "<entry name='Outbound-FB'>
+                  <rules>
+                <entry name='Alert-All'>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <file-type>
+                    <member>any</member>
+                  </file-type>
+                  <direction>both</direction>
+                  <action>alert</action>
+                </entry>
+                <entry name='Block'>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <file-type>
+                    <member>7z</member>
+                    <member>bat</member>
+                    <member>chm</member>
+                    <member>class</member>
+                    <member>cpl</member>
+                    <member>dll</member>
+                    <member>hlp</member>
+                    <member>hta</member>
+                    <member>jar</member>
+                    <member>ocx</member>
+                    <member>pif</member>
+                    <member>scr</member>
+                    <member>torrent</member>
+                    <member>vbe</member>
+                    <member>wsf</member>
+                  </file-type>
+                  <direction>both</direction>
+                  <action>block</action>
+                </entry>
+              </rules>
+            </entry>"
+
+  - name: Create Inbound File Blocking Profile
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/file-blocking"
+      element: "<entry name='Inbound-FB'>
+                  <rules>
+                    <entry name='Alert-All'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <action>alert</action>
+                    </entry>
+                    <entry name='Block'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>7z</member>
+                        <member>bat</member>
+                        <member>chm</member>
+                        <member>class</member>
+                        <member>cpl</member>
+                        <member>dll</member>
+                        <member>hlp</member>
+                        <member>hta</member>
+                        <member>jar</member>
+                        <member>ocx</member>
+                        <member>pif</member>
+                        <member>scr</member>
+                        <member>torrent</member>
+                        <member>vbe</member>
+                        <member>wsf</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <action>block</action>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create Internal File Blocking Profile
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/file-blocking"
+      element: "<entry name='Internal-FB'>
+                  <rules>
+                    <entry name='Alert-All'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <action>alert</action>
+                    </entry>
+                    <entry name='Block'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>7z</member>
+                        <member>bat</member>
+                        <member>chm</member>
+                        <member>class</member>
+                        <member>cpl</member>
+                        <member>hlp</member>
+                        <member>hta</member>
+                        <member>jar</member>
+                        <member>ocx</member>
+                        <member>pif</member>
+                        <member>scr</member>
+                        <member>torrent</member>
+                        <member>vbe</member>
+                        <member>wsf</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <action>block</action>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create Alert All File Blocking Profile
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/file-blocking"
+      element: "<entry name='Alert-Only-FB'>
+                  <rules>
+                    <entry name='Alert-Only'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <action>alert</action>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create AS Profile outbound
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/spyware"
+      element: "<entry name='Outbound-AS'>
+                  <botnet-domains>
+                    <lists>
+                      <entry name='default-paloalto-dns'>
+                        <action>
+                          <sinkhole/>
+                        </action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                    </lists>
+                    <dns-security-categories>
+                      <entry name='pan-dns-sec-benign'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>disable</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-cc'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-ddns'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-grayware'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-malware'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-parked'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>disable</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-phishing'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-proxy'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-recent'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                    </dns-security-categories>
+                    <sinkhole>
+                      <ipv4-address>sinkhole.paloaltonetworks.com</ipv4-address>
+                      <ipv6-address>2600:5200::1</ipv6-address>
+                    </sinkhole>
+                  </botnet-domains>
+                  <rules>
+                    <entry name='Block-Critical-High-Medium'>
+                      <action>
+                        <reset-both/>
+                      </action>
+                      <severity>
+                        <member>critical</member>
+                        <member>high</member>
+                        <member>medium</member>
+                      </severity>
+                      <threat-name>any</threat-name>
+                      <category>any</category>
+                      <packet-capture>single-packet</packet-capture>
+                    </entry>
+                    <entry name='Default-Low-Info'>
+                      <action>
+                        <default/>
+                      </action>
+                      <severity>
+                        <member>low</member>
+                        <member>informational</member>
+                      </severity>
+                      <threat-name>any</threat-name>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create AS profile inbound
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/spyware"
+      element: "<entry name='Inbound-AS'>
+                  <botnet-domains>
+                    <lists>
+                      <entry name='default-paloalto-dns'>
+                        <action>
+                          <sinkhole/>
+                        </action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                    </lists>
+                    <dns-security-categories>
+                      <entry name='pan-dns-sec-benign'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>disable</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-cc'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-ddns'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-grayware'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-malware'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-parked'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>disable</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-phishing'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-proxy'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-recent'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                    </dns-security-categories>
+                    <sinkhole>
+                      <ipv4-address>sinkhole.paloaltonetworks.com</ipv4-address>
+                      <ipv6-address>2600:5200::1</ipv6-address>
+                    </sinkhole>
+                  </botnet-domains>
+                  <rules>
+                    <entry name='Block-Critical-High-Medium'>
+                      <action>
+                        <reset-both/>
+                      </action>
+                      <severity>
+                        <member>critical</member>
+                        <member>high</member>
+                        <member>medium</member>
+                      </severity>
+                      <threat-name>any</threat-name>
+                      <category>any</category>
+                      <packet-capture>single-packet</packet-capture>
+                    </entry>
+                    <entry name='Default-Low-Info'>
+                      <action>
+                        <default/>
+                      </action>
+                      <severity>
+                        <member>low</member>
+                        <member>informational</member>
+                      </severity>
+                      <threat-name>any</threat-name>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create AS profile internal
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/spyware"
+      element: "<entry name='Internal-AS'>
+                  <botnet-domains>
+                    <lists>
+                      <entry name='default-paloalto-dns'>
+                        <action>
+                          <sinkhole/>
+                        </action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                    </lists>
+                    <dns-security-categories>
+                      <entry name='pan-dns-sec-benign'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>disable</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-cc'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-ddns'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-grayware'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-malware'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-parked'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>disable</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-phishing'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-proxy'>
+                        <log-level>default</log-level>
+                        <action>sinkhole</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                      <entry name='pan-dns-sec-recent'>
+                        <log-level>default</log-level>
+                        <action>default</action>
+                        <packet-capture>single-packet</packet-capture>
+                      </entry>
+                    </dns-security-categories>
+                    <sinkhole>
+                      <ipv4-address>sinkhole.paloaltonetworks.com</ipv4-address>
+                      <ipv6-address>2600:5200::1</ipv6-address>
+                    </sinkhole>
+                  </botnet-domains>
+                  <rules>
+                    <entry name='Block-Critical-High'>
+                      <action>
+                        <reset-both/>
+                      </action>
+                      <severity>
+                        <member>critical</member>
+                        <member>high</member>
+                      </severity>
+                      <threat-name>any</threat-name>
+                      <category>any</category>
+                      <packet-capture>single-packet</packet-capture>
+                    </entry>
+                    <entry name='Default-Medium-Low-Info'>
+                      <action>
+                        <default/>
+                      </action>
+                      <severity>
+                        <member>medium</member>
+                        <member>low</member>
+                        <member>informational</member>
+                      </severity>
+                      <threat-name>any</threat-name>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+
+  - name: Create AS profile Alert Only
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/spyware"
+      element:   "<entry name='Alert-Only-AS'>
+                      <botnet-domains>
+                        <lists>
+                          <entry name='default-paloalto-dns'>
+                            <action>
+                              <alert/>
+                            </action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                        </lists>
+                        <dns-security-categories>
+                          <entry name='pan-dns-sec-benign'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>disable</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-cc'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-ddns'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-grayware'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-malware'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-parked'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-phishing'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-proxy'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                          <entry name='pan-dns-sec-recent'>
+                            <log-level>default</log-level>
+                            <action>allow</action>
+                            <packet-capture>single-packet</packet-capture>
+                          </entry>
+                        </dns-security-categories>
+                        <sinkhole>
+                          <ipv4-address>sinkhole.paloaltonetworks.com</ipv4-address>
+                          <ipv6-address>2600:5200::1</ipv6-address>
+                        </sinkhole>
+                      </botnet-domains>
+                      <rules>
+                        <entry name='Alert-All'>
+                          <action>
+                            <alert/>
+                          </action>
+                          <severity>
+                            <member>any</member>
+                          </severity>
+                          <threat-name>any</threat-name>
+                          <category>any</category>
+                          <packet-capture>disable</packet-capture>
+                        </entry>
+                      </rules>
+                    </entry>"
+
+  - name: Create AS profile Exceptions
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/spyware"
+      element:      "<entry name='Exception-AS'>
+                        <description>Used for exception cases not part of the recommended practice</description>
+                        <botnet-domains>
+                          <lists>
+                            <entry name='default-paloalto-dns'>
+                              <packet-capture>disable</packet-capture>
+                              <action>
+                                <sinkhole/>
+                              </action>
+                            </entry>
+                          </lists>
+                          <dns-security-categories>
+                            <entry name='pan-dns-sec-benign'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-cc'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-ddns'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-grayware'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-malware'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-parked'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-phishing'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-proxy'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                            <entry name='pan-dns-sec-recent'>
+                              <log-level>default</log-level>
+                              <action>default</action>
+                              <packet-capture>disable</packet-capture>
+                            </entry>
+                          </dns-security-categories>
+                          <sinkhole>
+                            <ipv4-address>sinkhole.paloaltonetworks.com</ipv4-address>
+                            <ipv6-address>2600:5200::1</ipv6-address>
+                          </sinkhole>
+                        </botnet-domains>
+                      </entry>"
+
+  - name: Create outbound URL-Filtering
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/url-filtering"
+      element:   "<entry name='Outbound-URL'>
+                    <credential-enforcement>
+                      <mode>
+                        <ip-user/>
+                      </mode>
+                      <log-severity>high</log-severity>
+                      <block>
+                        <member>Block</member>
+                        <member>command-and-control</member>
+                        <member>grayware</member>
+                        <member>hacking</member>
+                        <member>malware</member>
+                        <member>phishing</member>
+                      </block>
+                      <continue>
+                        <member>Allow</member>
+                        <member>abortion</member>
+                        <member>abused-drugs</member>
+                        <member>adult</member>
+                        <member>alcohol-and-tobacco</member>
+                        <member>auctions</member>
+                        <member>business-and-economy</member>
+                        <member>computer-and-internet-info</member>
+                        <member>content-delivery-networks</member>
+                        <member>copyright-infringement</member>
+                        <member>cryptocurrency</member>
+                        <member>dating</member>
+                        <member>dynamic-dns</member>
+                        <member>educational-institutions</member>
+                        <member>entertainment-and-arts</member>
+                        <member>extremism</member>
+                        <member>financial-services</member>
+                        <member>gambling</member>
+                        <member>games</member>
+                        <member>government</member>
+                        <member>health-and-medicine</member>
+                        <member>high-risk</member>
+                        <member>home-and-garden</member>
+                        <member>hunting-and-fishing</member>
+                        <member>insufficient-content</member>
+                        <member>internet-communications-and-telephony</member>
+                        <member>internet-portals</member>
+                        <member>job-search</member>
+                        <member>legal</member>
+                        <member>low-risk</member>
+                        <member>medium-risk</member>
+                        <member>military</member>
+                        <member>motor-vehicles</member>
+                        <member>music</member>
+                        <member>newly-registered-domain</member>
+                        <member>news</member>
+                        <member>not-resolved</member>
+                        <member>nudity</member>
+                        <member>online-storage-and-backup</member>
+                        <member>parked</member>
+                        <member>peer-to-peer</member>
+                        <member>personal-sites-and-blogs</member>
+                        <member>philosophy-and-political-advocacy</member>
+                        <member>private-ip-addresses</member>
+                        <member>proxy-avoidance-and-anonymizers</member>
+                        <member>questionable</member>
+                        <member>real-estate</member>
+                        <member>recreation-and-hobbies</member>
+                        <member>reference-and-research</member>
+                        <member>religion</member>
+                        <member>search-engines</member>
+                        <member>sex-education</member>
+                        <member>shareware-and-freeware</member>
+                        <member>shopping</member>
+                        <member>social-networking</member>
+                        <member>society</member>
+                        <member>sports</member>
+                        <member>stock-advice-and-tools</member>
+                        <member>streaming-media</member>
+                        <member>swimsuits-and-intimate-apparel</member>
+                        <member>training-and-tools</member>
+                        <member>translation</member>
+                        <member>travel</member>
+                        <member>unknown</member>
+                        <member>weapons</member>
+                        <member>web-advertisements</member>
+                        <member>web-based-email</member>
+                        <member>web-hosting</member>
+                      </continue>
+                    </credential-enforcement>
+                    <log-http-hdr-user-agent>yes</log-http-hdr-user-agent>
+                    <log-http-hdr-referer>yes</log-http-hdr-referer>
+                    <log-http-hdr-xff>yes</log-http-hdr-xff>
+                    <alert>
+                      <member>Allow</member>
+                      <member>abortion</member>
+                      <member>abused-drugs</member>
+                      <member>adult</member>
+                      <member>alcohol-and-tobacco</member>
+                      <member>auctions</member>
+                      <member>business-and-economy</member>
+                      <member>computer-and-internet-info</member>
+                      <member>content-delivery-networks</member>
+                      <member>copyright-infringement</member>
+                      <member>cryptocurrency</member>
+                      <member>dating</member>
+                      <member>dynamic-dns</member>
+                      <member>educational-institutions</member>
+                      <member>entertainment-and-arts</member>
+                      <member>extremism</member>
+                      <member>financial-services</member>
+                      <member>gambling</member>
+                      <member>games</member>
+                      <member>government</member>
+                      <member>hacking</member>
+                      <member>health-and-medicine</member>
+                      <member>high-risk</member>
+                      <member>home-and-garden</member>
+                      <member>hunting-and-fishing</member>
+                      <member>insufficient-content</member>
+                      <member>internet-communications-and-telephony</member>
+                      <member>internet-portals</member>
+                      <member>job-search</member>
+                      <member>legal</member>
+                      <member>low-risk</member>
+                      <member>medium-risk</member>
+                      <member>military</member>
+                      <member>motor-vehicles</member>
+                      <member>music</member>
+                      <member>newly-registered-domain</member>
+                      <member>news</member>
+                      <member>not-resolved</member>
+                      <member>nudity</member>
+                      <member>online-storage-and-backup</member>
+                      <member>parked</member>
+                      <member>peer-to-peer</member>
+                      <member>personal-sites-and-blogs</member>
+                      <member>philosophy-and-political-advocacy</member>
+                      <member>private-ip-addresses</member>
+                      <member>proxy-avoidance-and-anonymizers</member>
+                      <member>questionable</member>
+                      <member>real-estate</member>
+                      <member>recreation-and-hobbies</member>
+                      <member>reference-and-research</member>
+                      <member>religion</member>
+                      <member>search-engines</member>
+                      <member>sex-education</member>
+                      <member>shareware-and-freeware</member>
+                      <member>shopping</member>
+                      <member>social-networking</member>
+                      <member>society</member>
+                      <member>sports</member>
+                      <member>stock-advice-and-tools</member>
+                      <member>streaming-media</member>
+                      <member>swimsuits-and-intimate-apparel</member>
+                      <member>training-and-tools</member>
+                      <member>translation</member>
+                      <member>travel</member>
+                      <member>unknown</member>
+                      <member>weapons</member>
+                      <member>web-advertisements</member>
+                      <member>web-based-email</member>
+                      <member>web-hosting</member>
+                    </alert>
+                    <block>
+                      <member>Block</member>
+                      <member>command-and-control</member>
+                      <member>grayware</member>
+                      <member>malware</member>
+                      <member>phishing</member>
+                    </block>
+                  </entry>"
+
+  - name: Slight Pause
+    pause:
+      seconds: 5
+
+  - name: Create URL-Filtering for Alert Only
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/url-filtering"
+      element:  "<entry name='Alert-Only-URL'>
+                    <credential-enforcement>
+                      <mode>
+                        <ip-user/>
+                      </mode>
+                      <log-severity>medium</log-severity>
+                      <alert>
+                        <member>Block</member>
+                        <member>Allow</member>
+                        <member>abortion</member>
+                        <member>abused-drugs</member>
+                        <member>adult</member>
+                        <member>alcohol-and-tobacco</member>
+                        <member>auctions</member>
+                        <member>business-and-economy</member>
+                        <member>command-and-control</member>
+                        <member>computer-and-internet-info</member>
+                        <member>content-delivery-networks</member>
+                        <member>copyright-infringement</member>
+                        <member>cryptocurrency</member>
+                        <member>dating</member>
+                        <member>dynamic-dns</member>
+                        <member>educational-institutions</member>
+                        <member>entertainment-and-arts</member>
+                        <member>extremism</member>
+                        <member>financial-services</member>
+                        <member>gambling</member>
+                        <member>games</member>
+                        <member>government</member>
+                        <member>grayware</member>
+                        <member>hacking</member>
+                        <member>health-and-medicine</member>
+                        <member>high-risk</member>
+                        <member>home-and-garden</member>
+                        <member>hunting-and-fishing</member>
+                        <member>insufficient-content</member>
+                        <member>internet-communications-and-telephony</member>
+                        <member>internet-portals</member>
+                        <member>job-search</member>
+                        <member>legal</member>
+                        <member>low-risk</member>
+                        <member>malware</member>
+                        <member>medium-risk</member>
+                        <member>military</member>
+                        <member>motor-vehicles</member>
+                        <member>music</member>
+                        <member>newly-registered-domain</member>
+                        <member>news</member>
+                        <member>not-resolved</member>
+                        <member>nudity</member>
+                        <member>online-storage-and-backup</member>
+                        <member>parked</member>
+                        <member>peer-to-peer</member>
+                        <member>personal-sites-and-blogs</member>
+                        <member>philosophy-and-political-advocacy</member>
+                        <member>phishing</member>
+                        <member>private-ip-addresses</member>
+                        <member>proxy-avoidance-and-anonymizers</member>
+                        <member>questionable</member>
+                        <member>real-estate</member>
+                        <member>recreation-and-hobbies</member>
+                        <member>reference-and-research</member>
+                        <member>religion</member>
+                        <member>search-engines</member>
+                        <member>sex-education</member>
+                        <member>shareware-and-freeware</member>
+                        <member>shopping</member>
+                        <member>social-networking</member>
+                        <member>society</member>
+                        <member>sports</member>
+                        <member>stock-advice-and-tools</member>
+                        <member>streaming-media</member>
+                        <member>swimsuits-and-intimate-apparel</member>
+                        <member>training-and-tools</member>
+                        <member>translation</member>
+                        <member>travel</member>
+                        <member>unknown</member>
+                        <member>weapons</member>
+                        <member>web-advertisements</member>
+                        <member>web-based-email</member>
+                        <member>web-hosting</member>
+                      </alert>
+                    </credential-enforcement>
+                    <alert>
+                      <member>Block</member>
+                      <member>Allow</member>
+                      <member>abortion</member>
+                      <member>abused-drugs</member>
+                      <member>adult</member>
+                      <member>alcohol-and-tobacco</member>
+                      <member>auctions</member>
+                      <member>business-and-economy</member>
+                      <member>command-and-control</member>
+                      <member>computer-and-internet-info</member>
+                      <member>content-delivery-networks</member>
+                      <member>copyright-infringement</member>
+                      <member>cryptocurrency</member>
+                      <member>dating</member>
+                      <member>dynamic-dns</member>
+                      <member>educational-institutions</member>
+                      <member>entertainment-and-arts</member>
+                      <member>extremism</member>
+                      <member>financial-services</member>
+                      <member>gambling</member>
+                      <member>games</member>
+                      <member>government</member>
+                      <member>grayware</member>
+                      <member>hacking</member>
+                      <member>health-and-medicine</member>
+                      <member>high-risk</member>
+                      <member>home-and-garden</member>
+                      <member>hunting-and-fishing</member>
+                      <member>insufficient-content</member>
+                      <member>internet-communications-and-telephony</member>
+                      <member>internet-portals</member>
+                      <member>job-search</member>
+                      <member>legal</member>
+                      <member>low-risk</member>
+                      <member>malware</member>
+                      <member>medium-risk</member>
+                      <member>military</member>
+                      <member>motor-vehicles</member>
+                      <member>music</member>
+                      <member>newly-registered-domain</member>
+                      <member>news</member>
+                      <member>not-resolved</member>
+                      <member>nudity</member>
+                      <member>online-storage-and-backup</member>
+                      <member>parked</member>
+                      <member>peer-to-peer</member>
+                      <member>personal-sites-and-blogs</member>
+                      <member>philosophy-and-political-advocacy</member>
+                      <member>phishing</member>
+                      <member>private-ip-addresses</member>
+                      <member>proxy-avoidance-and-anonymizers</member>
+                      <member>questionable</member>
+                      <member>real-estate</member>
+                      <member>recreation-and-hobbies</member>
+                      <member>reference-and-research</member>
+                      <member>religion</member>
+                      <member>search-engines</member>
+                      <member>sex-education</member>
+                      <member>shareware-and-freeware</member>
+                      <member>shopping</member>
+                      <member>social-networking</member>
+                      <member>society</member>
+                      <member>sports</member>
+                      <member>stock-advice-and-tools</member>
+                      <member>streaming-media</member>
+                      <member>swimsuits-and-intimate-apparel</member>
+                      <member>training-and-tools</member>
+                      <member>translation</member>
+                      <member>travel</member>
+                      <member>unknown</member>
+                      <member>weapons</member>
+                      <member>web-advertisements</member>
+                      <member>web-based-email</member>
+                      <member>web-hosting</member>
+                    </alert>
+                  </entry>"
+
+  - name: Slight Pause
+    pause:
+      seconds: 5
+
+  - name: Create URL-Filtering for Exception URLS
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/url-filtering"
+      element:  "<entry name='Exception-URL'>
+                  <credential-enforcement>
+                    <mode>
+                      <ip-user/>
+                    </mode>
+                    <log-severity>high</log-severity>
+                    <block>
+                      <member>Block</member>
+                      <member>Allow</member>
+                      <member>abortion</member>
+                      <member>abused-drugs</member>
+                      <member>adult</member>
+                      <member>alcohol-and-tobacco</member>
+                      <member>auctions</member>
+                      <member>business-and-economy</member>
+                      <member>command-and-control</member>
+                      <member>computer-and-internet-info</member>
+                      <member>content-delivery-networks</member>
+                      <member>copyright-infringement</member>
+                      <member>cryptocurrency</member>
+                      <member>dating</member>
+                      <member>dynamic-dns</member>
+                      <member>educational-institutions</member>
+                      <member>entertainment-and-arts</member>
+                      <member>extremism</member>
+                      <member>financial-services</member>
+                      <member>gambling</member>
+                      <member>games</member>
+                      <member>government</member>
+                      <member>grayware</member>
+                      <member>hacking</member>
+                      <member>health-and-medicine</member>
+                      <member>high-risk</member>
+                      <member>home-and-garden</member>
+                      <member>hunting-and-fishing</member>
+                      <member>insufficient-content</member>
+                      <member>internet-communications-and-telephony</member>
+                      <member>internet-portals</member>
+                      <member>job-search</member>
+                      <member>legal</member>
+                      <member>low-risk</member>
+                      <member>malware</member>
+                      <member>medium-risk</member>
+                      <member>military</member>
+                      <member>motor-vehicles</member>
+                      <member>music</member>
+                      <member>newly-registered-domain</member>
+                      <member>news</member>
+                      <member>not-resolved</member>
+                      <member>nudity</member>
+                      <member>online-storage-and-backup</member>
+                      <member>parked</member>
+                      <member>peer-to-peer</member>
+                      <member>personal-sites-and-blogs</member>
+                      <member>philosophy-and-political-advocacy</member>
+                      <member>phishing</member>
+                      <member>private-ip-addresses</member>
+                      <member>proxy-avoidance-and-anonymizers</member>
+                      <member>questionable</member>
+                      <member>real-estate</member>
+                      <member>recreation-and-hobbies</member>
+                      <member>reference-and-research</member>
+                      <member>religion</member>
+                      <member>search-engines</member>
+                      <member>sex-education</member>
+                      <member>shareware-and-freeware</member>
+                      <member>shopping</member>
+                      <member>social-networking</member>
+                      <member>society</member>
+                      <member>sports</member>
+                      <member>stock-advice-and-tools</member>
+                      <member>streaming-media</member>
+                      <member>swimsuits-and-intimate-apparel</member>
+                      <member>training-and-tools</member>
+                      <member>translation</member>
+                      <member>travel</member>
+                      <member>unknown</member>
+                      <member>weapons</member>
+                      <member>web-advertisements</member>
+                      <member>web-based-email</member>
+                      <member>web-hosting</member>
+                    </block>
+                  </credential-enforcement>
+                  <log-http-hdr-user-agent>yes</log-http-hdr-user-agent>
+                  <log-http-hdr-referer>yes</log-http-hdr-referer>
+                  <log-http-hdr-xff>yes</log-http-hdr-xff>
+                  <alert>
+                    <member>Allow</member>
+                    <member>abortion</member>
+                    <member>abused-drugs</member>
+                    <member>adult</member>
+                    <member>alcohol-and-tobacco</member>
+                    <member>auctions</member>
+                    <member>business-and-economy</member>
+                    <member>computer-and-internet-info</member>
+                    <member>content-delivery-networks</member>
+                    <member>copyright-infringement</member>
+                    <member>cryptocurrency</member>
+                    <member>dating</member>
+                    <member>dynamic-dns</member>
+                    <member>educational-institutions</member>
+                    <member>entertainment-and-arts</member>
+                    <member>extremism</member>
+                    <member>financial-services</member>
+                    <member>gambling</member>
+                    <member>games</member>
+                    <member>government</member>
+                    <member>hacking</member>
+                    <member>health-and-medicine</member>
+                    <member>high-risk</member>
+                    <member>home-and-garden</member>
+                    <member>hunting-and-fishing</member>
+                    <member>insufficient-content</member>
+                    <member>internet-communications-and-telephony</member>
+                    <member>internet-portals</member>
+                    <member>job-search</member>
+                    <member>legal</member>
+                    <member>low-risk</member>
+                    <member>medium-risk</member>
+                    <member>military</member>
+                    <member>motor-vehicles</member>
+                    <member>music</member>
+                    <member>newly-registered-domain</member>
+                    <member>news</member>
+                    <member>not-resolved</member>
+                    <member>nudity</member>
+                    <member>online-storage-and-backup</member>
+                    <member>parked</member>
+                    <member>peer-to-peer</member>
+                    <member>personal-sites-and-blogs</member>
+                    <member>philosophy-and-political-advocacy</member>
+                    <member>private-ip-addresses</member>
+                    <member>proxy-avoidance-and-anonymizers</member>
+                    <member>questionable</member>
+                    <member>real-estate</member>
+                    <member>recreation-and-hobbies</member>
+                    <member>reference-and-research</member>
+                    <member>religion</member>
+                    <member>search-engines</member>
+                    <member>sex-education</member>
+                    <member>shareware-and-freeware</member>
+                    <member>shopping</member>
+                    <member>social-networking</member>
+                    <member>society</member>
+                    <member>sports</member>
+                    <member>stock-advice-and-tools</member>
+                    <member>streaming-media</member>
+                    <member>swimsuits-and-intimate-apparel</member>
+                    <member>training-and-tools</member>
+                    <member>translation</member>
+                    <member>travel</member>
+                    <member>unknown</member>
+                    <member>weapons</member>
+                    <member>web-advertisements</member>
+                    <member>web-based-email</member>
+                    <member>web-hosting</member>
+                  </alert>
+                  <block>
+                    <member>Block</member>
+                    <member>command-and-control</member>
+                    <member>grayware</member>
+                    <member>malware</member>
+                    <member>phishing</member>
+                  </block>
+                </entry>"
+
+  - name: Slight Pause
+    pause:
+      seconds: 5
+
+  - name: Create profile for Antivirus Alert All
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/virus"
+      element:  "<entry name='Alert-Only-AV'>
+                  <decoder>
+                    <entry name='ftp'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                    <entry name='http'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                    <entry name='http2'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                    <entry name='imap'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                    <entry name='pop3'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                    <entry name='smb'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                    <entry name='smtp'>
+                      <action>alert</action>
+                      <wildfire-action>alert</wildfire-action>
+                      <mlav-action>alert</mlav-action>
+                    </entry>
+                  </decoder>
+                  <mlav-engine-filebased-enabled>
+                    <entry name='Windows Executables'>
+                      <mlav-policy-action>enable(alert-only)</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 1'>
+                      <mlav-policy-action>enable(alert-only)</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 2'>
+                      <mlav-policy-action>enable(alert-only)</mlav-policy-action>
+                    </entry>
+                    <entry name='Executable Linked Format'>
+                      <mlav-policy-action>enable(alert-only)</mlav-policy-action>
+                    </entry>
+                  </mlav-engine-filebased-enabled>
+                </entry>"
+
+  - name: Create profile for Antivirus Outbound
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/virus"
+      element:  "<entry name='Outbound-AV'>
+                  <decoder>
+                    <entry name='ftp'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='http'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='http2'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='imap'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='pop3'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='smb'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='smtp'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                  </decoder>
+                  <mlav-engine-filebased-enabled>
+                    <entry name='Windows Executables'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 1'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 2'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='Executable Linked Format'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                  </mlav-engine-filebased-enabled>
+                </entry>"
+
+  - name: Create profile for Antivirus Inbound
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/virus"
+      element:    "<entry name='Inbound-AV'>
+                    <decoder>
+                      <entry name='ftp'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                      <entry name='http'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                      <entry name='http2'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                      <entry name='imap'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                      <entry name='pop3'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                      <entry name='smb'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                      <entry name='smtp'>
+                        <action>reset-both</action>
+                        <wildfire-action>reset-both</wildfire-action>
+                        <mlav-action>reset-both</mlav-action>
+                      </entry>
+                    </decoder>
+                    <mlav-engine-filebased-enabled>
+                      <entry name='Windows Executables'>
+                        <mlav-policy-action>enable</mlav-policy-action>
+                      </entry>
+                      <entry name='PowerShell Script 1'>
+                        <mlav-policy-action>enable</mlav-policy-action>
+                      </entry>
+                      <entry name='PowerShell Script 2'>
+                        <mlav-policy-action>enable</mlav-policy-action>
+                      </entry>
+                      <entry name='Executable Linked Format'>
+                        <mlav-policy-action>enable</mlav-policy-action>
+                      </entry>
+                    </mlav-engine-filebased-enabled>
+                  </entry>"
+
+  - name: Create profile for Antivirus Internal
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/virus"
+      element:  "<entry name='Internal-AV'>
+                  <decoder>
+                    <entry name='ftp'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='http'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='http2'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='imap'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='pop3'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='smb'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='smtp'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                  </decoder>
+                  <mlav-engine-filebased-enabled>
+                    <entry name='Windows Executables'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 1'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 2'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='Executable Linked Format'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                  </mlav-engine-filebased-enabled>
+                </entry>"
+
+  - name: Create profile for Antivirus Exceptions
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/virus"
+      element:  "<entry name='Exception-AV'>
+                  <decoder>
+                    <entry name='ftp'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='http'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='http2'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='imap'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='pop3'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='smb'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                    <entry name='smtp'>
+                      <action>reset-both</action>
+                      <wildfire-action>reset-both</wildfire-action>
+                      <mlav-action>reset-both</mlav-action>
+                    </entry>
+                  </decoder>
+                  <mlav-engine-filebased-enabled>
+                    <entry name='Windows Executables'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 1'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='PowerShell Script 2'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                    <entry name='Executable Linked Format'>
+                      <mlav-policy-action>enable</mlav-policy-action>
+                    </entry>
+                  </mlav-engine-filebased-enabled>
+                  <description>Use this profile for rules needing modifications to the standard</description>
+                </entry>"
+
+  - name: Create profile for Outbound Vulnerability Protection
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/vulnerability"
+      element: "<entry name='Outbound-VP'>
+                  <rules>
+                    <entry name='Block-Critical-High-Medium'>
+                      <action>
+                        <reset-both/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>critical</member>
+                        <member>high</member>
+                        <member>medium</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>single-packet</packet-capture>
+                    </entry>
+                    <entry name='Default-Low-Info'>
+                      <action>
+                        <default/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>low</member>
+                        <member>informational</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for Inbound Vulnerability Protection
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/vulnerability"
+      element: "<entry name='Inbound-VP'>
+                  <rules>
+                    <entry name='Block-Critical-High-Medium'>
+                      <action>
+                        <reset-both/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>critical</member>
+                        <member>high</member>
+                        <member>medium</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>single-packet</packet-capture>
+                    </entry>
+                    <entry name='Default-Low-Info'>
+                      <action>
+                        <default/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>low</member>
+                        <member>informational</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for Internal Vulnerability Protection
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/vulnerability"
+      element: "<entry name='Internal-VP'>
+                  <rules>
+                    <entry name='Block-Critical-High'>
+                      <action>
+                        <reset-both/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>critical</member>
+                        <member>high</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>single-packet</packet-capture>
+                    </entry>
+                    <entry name='Default-Medium-Low-Info'>
+                      <action>
+                        <default/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>low</member>
+                        <member>informational</member>
+                        <member>medium</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for Alert-Only Vulnerability Protection
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/vulnerability"
+      element: "<entry name='Alert-Only-VP'>
+                  <rules>
+                    <entry name='Alert-All'>
+                      <action>
+                        <alert/>
+                      </action>
+                      <vendor-id>
+                        <member>any</member>
+                      </vendor-id>
+                      <severity>
+                        <member>any</member>
+                      </severity>
+                      <cve>
+                        <member>any</member>
+                      </cve>
+                      <threat-name>any</threat-name>
+                      <host>any</host>
+                      <category>any</category>
+                      <packet-capture>disable</packet-capture>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for the Exception Vulnerability Protection
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/vulnerability"
+      element: "<entry name='Exception-VP'></entry>"
+
+  - name: Create profile for the outbound wildfire
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/wildfire-analysis"
+      element:  "<entry name='Outbound-WF'>
+                  <rules>
+                    <entry name='Forward-All'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <analysis>public-cloud</analysis>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for the inbound wildfire
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/wildfire-analysis"
+      element:  "<entry name='Inbound-WF'>
+                  <rules>
+                    <entry name='Forward-All'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <analysis>public-cloud</analysis>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for the internal wildfire
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/wildfire-analysis"
+      element: "<entry name='Internal-WF'>
+                  <rules>
+                    <entry name='Forward-All'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <analysis>public-cloud</analysis>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile for the Alert-Only wildfire
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/wildfire-analysis"
+      element: "<entry name='Alert-Only-WF'>
+                  <rules>
+                    <entry name='Forward-All'>
+                      <application>
+                        <member>any</member>
+                      </application>
+                      <file-type>
+                        <member>any</member>
+                      </file-type>
+                      <direction>both</direction>
+                      <analysis>public-cloud</analysis>
+                    </entry>
+                  </rules>
+                </entry>"
+
+  - name: Create profile group for outbound
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profile-group"
+      element:  "<entry name='Outbound'>
+                    <virus>
+                      <member>Outbound-AV</member>
+                    </virus>
+                    <spyware>
+                      <member>Outbound-AS</member>
+                    </spyware>
+                    <vulnerability>
+                      <member>Outbound-VP</member>
+                    </vulnerability>
+                    <url-filtering>
+                      <member>Outbound-URL</member>
+                    </url-filtering>
+                    <file-blocking>
+                      <member>Outbound-FB</member>
+                    </file-blocking>
+                    <wildfire-analysis>
+                      <member>Outbound-WF</member>
+                    </wildfire-analysis>
+                  </entry>"
+
+  - name: Create profile group for inbound
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profile-group"
+      element:  "<entry name='Inbound'>
+                    <virus>
+                      <member>Inbound-AV</member>
+                    </virus>
+                    <spyware>
+                      <member>Inbound-AS</member>
+                    </spyware>
+                    <vulnerability>
+                      <member>Inbound-VP</member>
+                    </vulnerability>
+                    <file-blocking>
+                      <member>Inbound-FB</member>
+                    </file-blocking>
+                    <wildfire-analysis>
+                      <member>Inbound-WF</member>
+                    </wildfire-analysis>
+                  </entry>"
+
+  - name: Create profile group for internal
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profile-group"
+      element:  "<entry name='Internal'>
+                    <virus>
+                      <member>Internal-AV</member>
+                    </virus>
+                    <spyware>
+                      <member>Internal-AS</member>
+                    </spyware>
+                    <vulnerability>
+                      <member>Internal-VP</member>
+                    </vulnerability>
+                    <file-blocking>
+                      <member>Internal-FB</member>
+                    </file-blocking>
+                    <wildfire-analysis>
+                      <member>Internal-WF</member>
+                    </wildfire-analysis>
+                  </entry>"
+
+  - name: Create profile group for alert-all
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profile-group"
+      element: "<entry name='Alert-Only'>
+                  <virus>
+                    <member>Alert-Only-AV</member>
+                  </virus>
+                  <spyware>
+                    <member>Alert-Only-AS</member>
+                  </spyware>
+                  <vulnerability>
+                    <member>Alert-Only-VP</member>
+                  </vulnerability>
+                  <url-filtering>
+                    <member>Alert-Only-URL</member>
+                  </url-filtering>
+                  <file-blocking>
+                    <member>Alert-Only-FB</member>
+                  </file-blocking>
+                  <wildfire-analysis>
+                    <member>Alert-Only-WF</member>
+                  </wildfire-analysis>
+                </entry>"
+
+  - name: Create profile group for default
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profile-group"
+      element: "<entry name='default'>
+                  <virus>
+                    <member>Outbound-AV</member>
+                  </virus>
+                  <spyware>
+                    <member>Outbound-AS</member>
+                  </spyware>
+                  <vulnerability>
+                    <member>Outbound-VP</member>
+                  </vulnerability>
+                  <url-filtering>
+                    <member>Outbound-URL</member>
+                  </url-filtering>
+                  <file-blocking>
+                    <member>Outbound-FB</member>
+                  </file-blocking>
+                  <wildfire-analysis>
+                    <member>Outbound-WF</member>
+                  </wildfire-analysis>
+                </entry>"
+
+  - name: Adding Hip Objects
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/hip-objects"
+      element:  " <entry name='is-win'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>All</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows endpoints</description>
+                  </entry>
+                  <entry name='is-win-10'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows 10</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows 10 endpoints</description>
+                  </entry>
+                  <entry name='is-win-8'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows 8</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows 8 endpoints</description>
+                  </entry>
+                  <entry name='is-win-7'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows 7</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows 7 endpoints</description>
+                  </entry>
+                  <entry name='is-win-vista'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows Vista</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows Vista endpoints</description>
+                  </entry>
+                  <entry name='is-win-xp'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows XP</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows XP endpoints</description>
+                  </entry>
+                  <entry name='is-win-uwp-mobil'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows UWP Mobile</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows UWP mobile endpoints</description>
+                  </entry>
+                  <entry name='is-win-uwp-desktop'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Microsoft>Windows UWP Desktop</Microsoft>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Windows UWP desktops</description>
+                  </entry>
+                  <entry name='is-mac'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Apple>Mac OS X</Apple>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Mac endpoints</description>
+                  </entry>
+                  <entry name='is-ios'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Apple>iOS</Apple>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all iOS endpoints</description>
+                  </entry>
+                  <entry name='is-android'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Google>Android</Google>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Android endpoints</description>
+                  </entry>
+                  <entry name='is-linux'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Linux>All</Linux>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Linux endpoints</description>
+                  </entry>
+                  <entry name='is-chromeOS'>
+                    <host-info>
+                      <criteria>
+                        <os>
+                          <contains>
+                            <Google>Chrome</Google>
+                          </contains>
+                        </os>
+                      </criteria>
+                    </host-info>
+                    <disable-override>no</disable-override>
+                    <description>Matches all Chrome OS endpoints</description>
+                  </entry>
+                  <entry name='is-rooted-or-jail-broken'>
+                    <mobile-device>
+                      <criteria>
+                        <jailbroken>yes</jailbroken>
+                      </criteria>
+                    </mobile-device>
+                    <disable-override>no</disable-override>
+                    <description>Matches all rooted or jailbroken endpoints</description>
+                  </entry>
+                  <entry name='is-anti-malware-and-rtp-enabled'>
+                    <anti-malware>
+                      <criteria>
+                        <real-time-protection>yes</real-time-protection>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </anti-malware>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any anti-malware software installed and Real Time Protection enabled</description>
+                  </entry>
+                  <entry name='is-anti-malware-installed'>
+                    <anti-malware>
+                      <criteria>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </anti-malware>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any anti-malware software installed</description>
+                  </entry>
+                  <entry name='is-anti-malware-installed-7days'>
+                    <anti-malware>
+                      <criteria>
+                        <virdef-version>
+                          <within>
+                            <days>7</days>
+                          </within>
+                        </virdef-version>
+                        <last-scan-time>
+                          <within>
+                            <days>7</days>
+                          </within>
+                        </last-scan-time>
+                        <real-time-protection>yes</real-time-protection>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </anti-malware>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any anti-malware software installed and a Last Scan Time and Virus Definition within 7 days</description>
+                  </entry>
+                  <entry name='is-anti-malware-installed-1day'>
+                    <anti-malware>
+                      <criteria>
+                        <virdef-version>
+                          <within>
+                            <days>1</days>
+                          </within>
+                        </virdef-version>
+                        <last-scan-time>
+                          <within>
+                            <days>1</days>
+                          </within>
+                        </last-scan-time>
+                        <real-time-protection>yes</real-time-protection>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </anti-malware>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any anti-malware software installed and a Last Scan Time and Virus Definition within 1 day</description>
+                  </entry>
+                  <entry name='is-firewall-enabled'>
+                    <firewall>
+                      <criteria>
+                        <is-enabled>yes</is-enabled>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </firewall>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any firewall software installed and enabled</description>
+                  </entry>
+                  <entry name='is-firewall-installed'>
+                    <firewall>
+                      <criteria>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </firewall>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any firewall software installed</description>
+                  </entry>
+                  <entry name='is-patch-management-enabled'>
+                    <patch-management>
+                      <criteria>
+                        <missing-patches>
+                          <check>has-any</check>
+                        </missing-patches>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </patch-management>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any patch management software installed and enabled</description>
+                  </entry>
+                  <entry name='is-patch-management-installed'>
+                    <patch-management>
+                      <criteria>
+                        <missing-patches>
+                          <check>has-any</check>
+                        </missing-patches>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </patch-management>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any patch management software installed</description>
+                  </entry>
+                  <entry name='is-disk-backup-installed'>
+                    <disk-backup>
+                      <criteria>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </disk-backup>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any disk backup software installed</description>
+                  </entry>
+                  <entry name='is-disk-backup-installed-7days'>
+                    <disk-backup>
+                      <criteria>
+                        <last-backup-time>
+                          <within>
+                            <days>7</days>
+                          </within>
+                        </last-backup-time>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </disk-backup>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any disk backup software installed and a Last Backup Time within 7 days</description>
+                  </entry>
+                  <entry name='is-disk-backup-installed-1day'>
+                    <disk-backup>
+                      <criteria>
+                        <last-backup-time>
+                          <within>
+                            <days>1</days>
+                          </within>
+                        </last-backup-time>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </disk-backup>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any disk backup software installed and a Last Backup Time within 1 day</description>
+                  </entry>
+                  <entry name='is-disk-encryption-installed'>
+                    <disk-encryption>
+                      <criteria>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </disk-encryption>
+                    <disable-override>no</disable-override>
+                    <description>Matches endpoints that have any disk encryption software installed</description>
+                  </entry>
+                  <entry name='Macintosh-hd-drive-encrypted'>
+                    <disk-encryption>
+                      <criteria>
+                        <encrypted-locations>
+                          <entry name='Macintosh HD'>
+                            <encryption-state>
+                              <is>encrypted</is>
+                            </encryption-state>
+                          </entry>
+                        </encrypted-locations>
+                        <is-installed>yes</is-installed>
+                      </criteria>
+                      <exclude-vendor>no</exclude-vendor>
+                    </disk-encryption>
+                    <disable-override>no</disable-override>
+                  </entry>"
+
+  - name: Add Hip Profiles
+    panos_config_element:
+      provider: '{{ panorama }}'
+      xpath: "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='PrismaAccess']/profiles/hip-profiles"
+      element: "<entry name='is-win-and-anti-malware'>
+                  <match>'is-win'  and 'is-anti-malware-and-rtp-enabled' </match>
+                  <description>Matches Windows endpoints that have anti-malware software installed</description>
+                </entry>
+                <entry name='is-win-and-anti-malware-1day'>
+                  <match>'is-win' and 'is-anti-malware-installed-1day' </match>
+                  <description>Matches Windows endpoints that have anti-malware software installed and a Last Scan Time and Virus Definition within 1 day</description>
+                </entry>
+                <entry name='is-win-and-anti-malware-7days'>
+                  <match>'is-win'  and 'is-anti-malware-installed-7days' </match>
+                  <description>Matches Windows endpoints that have anti-malware software installed and a Last Scan Time and Virus Definition within 7 days</description>
+                </entry>
+                <entry name='is-win-and-firewall'>
+                  <match>'is-win'  and 'is-firewall-enabled' </match>
+                  <description>Matches Windows endpoints that have firewall software installed and enabled</description>
+                </entry>
+                <entry name='is-win-and-patch-management'>
+                  <match>'is-win'  and 'is-patch-management-enabled' </match>
+                  <description>Matches Windows endpoints that have patch management software installed and enabled</description>
+                </entry>
+                <entry name='is-win-and-disk-backup'>
+                  <match>'is-win'  and 'is-disk-backup-installed' </match>
+                  <description>Matches Windows endpoints that have disk backup software installed</description>
+                </entry>
+                <entry name='is-win-and-disk-backup-1day'>
+                  <match>'is-win'  and 'is-disk-backup-installed-1day' </match>
+                  <description>Matches Windows endpoints that have disk backup software installed and a Last Backup Time within 1 day</description>
+                </entry>
+                <entry name='is-win-and-disk-backup-7days'>
+                  <match>'is-win'  and 'is-disk-backup-installed-7days' </match>
+                  <description>Matches Windows endpoints that have disk backup software installed and a Last Backup Time within 7 days</description>
+                </entry>
+                <entry name='is-win-and-disk-encryption'>
+                  <match>'is-win'  and 'is-disk-encryption-installed' </match>
+                  <description>Matches Windows endpoints that have disk encryption software installed</description>
+                </entry>
+                <entry name='is-mac-and-anti-malware'>
+                  <match>'is-mac'  and 'is-anti-malware-and-rtp-enabled' </match>
+                  <description>Matches Mac endpoints that have anti-malware software installed</description>
+                </entry>
+                <entry name='is-mac-and-anti-malware-1day'>
+                  <match>'is-mac'  and 'is-anti-malware-installed-1day' </match>
+                  <description>Matches Mac endpoints that have anti-malware software installed and a Last Scan Time and Virus Definition within 1 day</description>
+                </entry>
+                <entry name='is-mac-and-anti-malware-7days'>
+                  <match>'is-mac'  and 'is-anti-malware-installed-7days' </match>
+                  <description>Matches Mac endpoints that have anti-malware software installed and a Last Scan Time and Virus Definition within 7 days</description>
+                </entry>
+                <entry name='is-mac-and-firewall'>
+                  <match>'is-mac'  and 'is-firewall-enabled' </match>
+                  <description>Matches Mac endpoints that have firewall software installed and enabled</description>
+                </entry>
+                <entry name='is-mac-and-patch-management'>
+                  <match>'is-mac'  and 'is-patch-management-enabled' </match>
+                  <description>Matches Mac endpoints that have patch management software installed and enabled</description>
+                </entry>
+                <entry name='is-mac-and-disk-backup'>
+                  <match>'is-mac' and 'is-disk-backup-installed' </match>
+                  <description>Matches Mac endpoints that have disk backup software installed</description>
+                </entry>
+                <entry name='is-mac-and-disk-backup-1day'>
+                  <match>'is-mac' and 'is-disk-backup-installed-1day' </match>
+                  <description>Matches Mac endpoints that have disk backup software installed and a Last Backup Time within 1 day</description>
+                </entry>
+                <entry name='is-mac-and-disk-backup-7days'>
+                  <match>'is-mac'  and 'is-disk-backup-installed-7days' </match>
+                  <description>Matches Mac endpoints that have disk backup software installed and a Last Backup Time within 7 days</description>
+                </entry>
+                <entry name='is-mac-and-disk-encryption'>
+                  <match>'is-mac'  and 'is-disk-encryption-installed' </match>
+                  <description>Matches Mac endpoints that have disk encryption software installed</description>
+                </entry>
+                <entry name='is-win-up-to-date-1day'>
+                  <match>'is-win'  and 'is-anti-malware-installed-1day'  and 'is-firewall-enabled'  and 'is-patch-management-enabled'  and 'is-disk-backup-installed-1day'  and 'is-disk-encryption-installed' </match>
+                  <description>Matches Windows endpoints that have anti-malware software installed; firewall software; patch management software; disk backup software; disk encryption software; and a Last Scan Time, Virus Definition, and Last Backup Time within 1 day</description>
+                </entry>
+                <entry name='is-win-up-to-date-7days'>
+                  <match>'is-win'  and 'is-anti-malware-installed-7days'  and 'is-firewall-enabled'  and 'is-patch-management-enabled'  and 'is-disk-backup-installed-7days'  and 'is-disk-encryption-installed' </match>
+                  <description>Matches Windows endpoints that have anti-malware software installed; firewall software; patch management software; disk backup software; disk encryption software; and a Last Scan Time, Virus Definition, and Last Backup Time within 7 days</description>
+                </entry>"
+
+
+  - name: Commit the configuration
+    panos_commit_panorama:
+      provider: '{{ panorama }}'
+      description: 'Best Practice Profiles and Policies Version 1.0.5'
