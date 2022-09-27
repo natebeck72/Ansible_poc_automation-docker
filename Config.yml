@@ -34,9 +34,9 @@
                       <ethernet>
                         <entry name='ethernet1/1'>
                           <layer3>
-                            <ip>
-                              <entry name='100.64.1.4/24'/>
-                            </ip>
+                            <dhcp-client>
+                              <create-default-route>no</create-default-route>
+                            </dhcp-client>
                           </layer3>
                         </entry>
                       </ethernet>
