@@ -1,0 +1,245 @@
+---
+- hosts: localhost
+  connection: localhost
+
+collections:
+  - azrure.azcollection
+
+tasks:
+
+  - name: Create Resource Group
+    azure_rm_resourcegroup:
+      name: 'nbeck-poc-harrynutter'
+      location: 'eastus'
+    register: RGNAME
+
+  - name: Create Network Security Group
+    azure_rm_securitygroup:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: 'harrynutter-nsg'
+      rules:
+        - name: Allow-HTTPS
+          protocol: Tcp
+          destination_port_ranges: 443
+          access: Allow
+          priority: 100
+        - name: Allow-SSH
+          protocol: Tcp
+          destination_port_ranges: 22
+          access: Allow
+          priority: 101
+        - name: Allow-Intra
+          access: Allow
+          priority: 102
+        - name: Default-Deny
+          access: Deny
+          priority: 200
+    register: NSGNAME
+
+  - name: Create Public IP For FWMgmt
+    azure_rm_publicipaddress:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: 'harrynutter-panfwmgmt'
+    register: FWMGMTIP
+
+  - name: Create public ip for Panorama
+    azure_rm_publicipaddress:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: 'harrynutter-panorama'
+    register: PANORAMAIP
+
+  - name: Create Storage account Diag
+    azure_rm_storageaccount:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: 'harrynutterdiag'
+      type: StandardLRS
+      state: present
+    register: SGNAME
+
+  - name: Create Boot Diag container
+    azure_rm_storageblob:
+      resource_group: '{{ RGNAME.state.name }}'
+      storage_account_name: '{{ SGNAME.state.name }}'
+      container: bootdiagnostics
+      state: present
+
+  - name: Create Internal Route Table
+    azure_rm_routetable:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: internal_routetable
+    register: INTRT
+
+  - name: manage internal route table
+    azure_rm_route:
+     resource_group: '{{ RGNAME.state.name }}'
+     route_table_name: internal_routetable
+     name: default
+     address_prefix: 0.0.0.0/0
+     next_hop_type: virtual_appliance
+     next_hop_ip_address: '100.64.2.4'
+
+  - name: Create External Route Table
+    azure_rm_routetable:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: external_routetable
+    register: EXTRT
+
+  - name: Manage external route table
+    azure_rm_route:
+      resource_group: '{{ RGNAME.state.name }}'
+      route_table_name: external_routetable
+      name: default
+      address_prefix: 0.0.0.0/0
+      next_hop_type: internet
+
+  - name: Create Virtual Network
+    azure_rm_virtualnetwork:
+      resource_group: '{{ RGNAME.state.name }}'
+      name: 'harrynutter_vnet'
+      address_prefixes_cidr:
+        - '100.64.0.0/24'
+        - '100.64.1.0/24'
+        - '100.64.2.0/24'
+    register: VNETNAME
+
+  - name: Create MGMT subnet
+    azure_rm_subnet:
+      resource_group: '{{ RGNAME.state.name }}'
+      virtual_network_name: '{{ VNETNAME.state.name }}'
+      name: Mgmt
+      address_prefix_cidr: '100.64.0.0/24'
+      security_group:
+        name: '{{ NSGNAME.state.name }}'
+    register: MGMTSUBNET
+
+  - name: Create Trust Subnet
+    azure_rm_subnet:
+      resource_group: '{{ RGNAME.state.name }}'
+      virtual_network_name: '{{ VNETNAME.state.name }}'
+      name: Trust
+      address_prefix_cidr: '100.64.2.0/24'
+      security_group:
+        name: '{{ NSGNAME.state.name }}'
+      route_table: internal_routetable
+    register: TRUSTSUBNET
+
+  - name: Create Untrust Sunmet
+    azure_rm_subnet:
+      resource_group: '{{ RGNAME.state.name }}'
+      virtual_network_name: '{{ VNETNAME.state.name }}'
+      name: Untrust
+      address_prefix_cidr: '100.64.1.0/24'
+      security_group:
+        name: '{{ NSGNAME.state.name }}'
+      route_table: external_routetable
+    register: UNTRUSTSUBNET
+
+  - name: Create FW-eth0 interface
+      azure_rm_networkinterface:
+        name: fw-eth0
+        resource_group: '{{ RGNAME.state.name }}'
+        virtual_network: '{{ VNETNAME.state.name }}'
+        subnet_name: '{{ MGMTSUBNET.state.name }}'
+        security_group: '{{ NSGNAME.state.name }}'
+        ip_configurations:
+          - name: ipconfig-mgmt
+            private_ip_address: '100.64.0.4'
+            private_ip_allocation_method: Static
+            public_ip_address_name: '{{ FWMGMTIP.state.name }}'
+            public_ip_allocation_method: Static
+            primary: yes
+      register: FWETH0
+
+    - name: Create FW-eth1 interface
+      azure_rm_networkinterface:
+        name: fw-eth1
+        resource_group: '{{ RGNAME.state.name }}'
+        virtual_network: '{{ VNETNAME.state.name }}'
+        subnet_name: '{{ UNTRUSTSUBNET.state.name }}'
+        security_group: '{{ NSGNAME.state.name }}'
+        ip_configurations:
+          - name: ipconfig-untrust
+            private_ip_allocation_method: Static
+            private_ip_address: '100.64.1.4'
+            public_ip_allocation_method: Static
+            public_ip_address_name: '{{ PANORAMAIP.state.name }}'
+            primary: no
+        enable_accelerated_networking: yes
+        enable_ip_forwarding: yes
+      register: FWETH1
+
+    - name: Create FW-ETH2 interface
+      azure_rm_networkinterface:
+        name: fw-eth2
+        resource_group: '{{ RGNAME.state.name }}'
+        virtual_network: '{{ VNETNAME.state.name }}'
+        subnet_name: '{{ TRUSTSUBNET.state.name }}'
+        security_group: '{{ NSGNAME.state.name }}'
+        ip_configurations:
+          - name: ipconfig-trust
+            private_ip_allocation_method: Static
+            private_ip_address: '100.64.2.4'
+            primary: no
+        enable_accelerated_networking: yes
+        enable_ip_forwarding: yes
+      register: FWETH2
+
+    - name: Create Panorama mgmt Interface
+      azure_rm_networkinterface:
+        name: panorama-mgmt
+        resource_group: '{{ RGNAME.state.name }}'
+        virtual_network: '{{ VNETNAME.state.name }}'
+        subnet_name: '{{ TRUSTSUBNET.state.name }}'
+        security_group: '{{ NSGNAME.state.name }}'
+        ip_configurations:
+          - name: ipconfig-panorama
+            private_ip_allocation_method: Static
+            private_ip_address: '100.64.2.5'
+      register: PANOETH
+
+    # This is the actual deployment of the vm's, everything above this was a pre-requisite for getting to this spot
+    # again we are looking up the network username for the user and pushing it into the devices when created.
+
+    - name: Create VM300 Firewall
+      azure_rm_virtualmachine:
+        resource_group: '{{ RGNAME.state.name }}'
+        name: 'harrynutter-ngfw'
+        vm_size: Standard_DS3_v2
+        plan:
+          name: byol
+          product: vmseries-flex
+          publisher: paloaltonetworks
+        image:
+          publisher: paloaltonetworks
+          offer: vmseries-flex
+          sku: byol
+          version: latest
+        admin_username: '{{ admin_username }}'
+        admin_password: '{{ admin_password }}'
+        network_interface_names:
+          - '{{ FWETH0.state.name }}'
+          - '{{ FWETH1.state.name }}'
+          - '{{ FWETH2.state.name }}'
+      register: PANFW
+
+    - name: Create Panorama Instance
+      azure_rm_virtualmachine:
+        resource_group: '{{ RGNAME.state.name }}'
+        name: 'harrynutter-panorama'
+        vm_size: Standard_D4_v2
+        plan:
+          name: byol
+          product: panorama
+          publisher: paloaltonetworks
+        image:
+          publisher: paloaltonetworks
+          offer: panorama
+          sku: byol
+          version: 10.1.6
+        admin_username: '{{ admin_username }}'
+        admin_password: '{{ admin_password }}'
+        network_interface_names:
+          - '{{ PANOETH.state.name }}'
+      register: PANORAMA
+
+
