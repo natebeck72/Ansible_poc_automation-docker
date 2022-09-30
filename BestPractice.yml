@@ -60,7 +60,7 @@
     panos_config_element:
       provider: '{{ panorama }}'
       xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
-      element: "<device-telemetry
+      element: "<device-telemetry>
                   <threat-prevention>no</threat-prevention>
                   <device-health-performance>no</device-health-performance>
                   <product-usage>no</product-usage>
