@@ -2826,8 +2826,3 @@
                   <description>Matches Windows endpoints that have anti-malware software installed; firewall software; patch management software; disk backup software; disk encryption software; and a Last Scan Time, Virus Definition, and Last Backup Time within 7 days</description>
                 </entry>"
 
-
-  - name: Commit the configuration
-    panos_commit_panorama:
-      provider: '{{ panorama }}'
-      description: 'Best Practice Profiles and Policies Version 1.0.5'
