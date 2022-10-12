@@ -13,6 +13,14 @@
 
   tasks:
 
+
+  - name: check Panorma ready
+    panos_check:
+      provider: '{{ panorama }}'
+      initial_delay: 60
+      interval: 5
+      timeout: 1800
+      
   - name: License Panorama
     panos_op:
       provider: '{{ panorama }}'

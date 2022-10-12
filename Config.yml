@@ -23,7 +23,7 @@
         provider: '{{ firewall }}'
         initial_delay: 30
         interval: 5
-        timeout: 1800
+        timeout: 2400
 
 
     - name: configure eth1 firewall
