@@ -315,37 +315,37 @@
         interval: 5
         timeout: 1800
 
-    # Import the SSL Cert for the POC Domain
-    - name: Import SSL Cert for Panorama
-      panos_import:
-        provider: '{{ panorama }}'
-        category: 'keypair'
-        certificate_name: 'Wildcard'
-        format: 'pkcs12'
-        passphrase: '{{ certpassphrase }}'
-        url: '{{ certurl }}'
-
-    - name: Pause for 30 seconds
-      pause:
-        seconds: 30
-
-    - name: Create TLS Profile
-      panos_config_element:
-        provider: '{{ panorama }}'
-        xpath: "/config/panorama/ssl-tls-service-profile"
-        element:  '<entry name="POC_CERT">
-                    <protocol-settings>
-                      <min-version>tls1-1</min-version>
-                      <max-version>max</max-version>
-                    </protocol-settings>
-                    <certificate>Wildcard</certificate>
-                  </entry>'
-    
-    - name: Set TLS Profile
-      panos_config_element:
-        provider: '{{ panorama }}'
-        xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
-        element:  '<ssl-tls-service-profile>POC_CERT</ssl-tls-service-profile>'
+#    # Import the SSL Cert for the POC Domain
+#    - name: Import SSL Cert for Panorama
+#      panos_import:
+#        provider: '{{ panorama }}'
+#        category: 'keypair'
+#        certificate_name: 'Wildcard'
+#        format: 'pkcs12'
+#        passphrase: '{{ certpassphrase }}'
+#        url: '{{ certurl }}'
+#
+#    - name: Pause for 30 seconds
+#      pause:
+#        seconds: 30
+#
+#    - name: Create TLS Profile
+#      panos_config_element:
+#        provider: '{{ panorama }}'
+#        xpath: "/config/panorama/ssl-tls-service-profile"
+#        element:  '<entry name="POC_CERT">
+#                    <protocol-settings>
+#                      <min-version>tls1-1</min-version>
+#                      <max-version>max</max-version>
+#                    </protocol-settings>
+#                    <certificate>Wildcard</certificate>
+#                  </entry>'
+#    
+#    - name: Set TLS Profile
+#      panos_config_element:
+#        provider: '{{ panorama }}'
+#        xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+#        element:  '<ssl-tls-service-profile>POC_CERT</ssl-tls-service-profile>'
 
     - name: Create Customer Banner
       panos_config_element:
